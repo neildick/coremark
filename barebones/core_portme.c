@@ -37,18 +37,33 @@ volatile ee_s32 seed3_volatile = 0x8;
 #endif
 volatile ee_s32 seed4_volatile = ITERATIONS;
 volatile ee_s32 seed5_volatile = 0;
+
 /* Porting : Timing functions
         How to capture time and convert to seconds must be ported to whatever is
    supported by the platform. e.g. Read value from on board RTC, read value from
    cpu clock cycles performance counter etc. Sample implementation for standard
    time.h and windows.h definitions included.
 */
+static volatile unsigned long tick;
+#define SysTick_reload  0xFFFFFFU
 CORETIMETYPE
 barebones_clock()
 {
-    unsigned long t = (*((volatile unsigned long *)(0xE000E018)));
-    return t;
+    unsigned long ticks, subtick;
+    __disable_irq();
+    subtick = (*((volatile unsigned long *)(0xE000E018)));
+    ticks = tick;
+    __enable_irq();
+    return (ticks * SysTick_reload) + (SysTick_reload - subtick);
 }
+
+/* Define Coarse timer by handling a value in the interrupt */
+void SysTick_Handler(void)
+{
+    tick++;
+}
+
+
 /* Define : TIMER_RES_DIVIDER
         Divider to trade off timer resolution and total time that can be
    measured.
@@ -79,7 +94,7 @@ void
 start_time(void)
 {
     // Have to start the SYSTICK timer off
-    SysTick_Config(0xFFFFFF);
+    SysTick_Config(SysTick_reload);
     GETMYTIME(&start_time_val);
 }
 /* Function : stop_time
@@ -137,6 +152,7 @@ void
 portable_init(core_portable *p, int *argc, char *argv[])
 {
     SEGGER_RTT_Init();
+    SEGGER_RTT_SetFlagsUpBuffer(0, SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL);
 #if defined(MAIN_HAS_NOARGC) && (MAIN_HAS_NOARGC==1)
     (void)argc;(void)argv;
 #endif
