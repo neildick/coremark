@@ -1,0 +1,42 @@
+
+cc = arm-none-eabi-gcc
+ld = arm-none-eabi-ld
+obj = arm-none-eabi-objcopy
+
+cflags = --std=c99 -Wextra -ffunction-sections -fdata-sections -g -O2 -Werror -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wall -D ARMCM4_FP -D ITERATIONS=10
+
+includes = -I ..\CMSIS\CMSIS\Core\Include\ -I ..\CMSIS\Device\ARM\ARMCM4\Include -I ..\CSR_Headers\ -I .\ -I ..\RTT  -I .\barebones
+
+ldflags = -O2 -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16  -T ..\CMSIS\Device\ARM\ARMCM4\Source\GCC\gcc_arm.ld -specs=nosys.specs -ffunction-sections -fdata-sections -Wl,--gc-sections
+
+rule compile
+     command = $cc $cflags $includes -c $in -o $out
+
+rule link
+     command = $cc $ldflags $in -o $out
+
+rule obj_hex
+     command = $obj -O ihex $in $out
+
+rule obj_bin
+     command = $obj -O binary $in $out
+
+build startup_ARMCM4.o: compile ..\CMSIS\Device\ARM\ARMCM4\Source\startup_ARMCM4.c
+
+build system_ARMCM4.o: compile ..\CMSIS\Device\ARM\ARMCM4\Source\system_ARMCM4.c
+
+# SEGGER Printf support
+
+build SEGGER_RTT.o: compile ..\RTT\SEGGER_RTT.c
+
+#  COREMARK files
+build core_list_join.o: compile core_list_join.c
+build core_main.o: compile core_main.c
+build core_matrix.o: compile core_matrix.c
+build core_state.o: compile core_state.c
+build core_util.o: compile core_util.c
+build core_portme.o: compile barebones\core_portme.c
+build ee_printf.o: compile barebones\ee_printf.c
+
+build core_mark.elf: link core_list_join.o core_main.o ee_printf.o core_matrix.o core_state.o core_util.o core_portme.o SEGGER_RTT.o system_ARMCM4.o startup_ARMCM4.o
+build core_mark.bin: obj_bin core_mark.elf

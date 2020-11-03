@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <coremark.h>
+#include <../coremark.h>
 #include <stdarg.h>
+#include "SEGGER_RTT.h"
 
 #define ZEROPAD   (1 << 0) /* Pad with zero */
 #define SIGN      (1 << 1) /* Unsigned/signed long */
@@ -146,6 +147,7 @@ eaddr(char *str, unsigned char *addr, int size, int precision, int type)
     char *dig = digits;
     int   i, len;
 
+    (void)precision;
     if (type & UPPERCASE)
         dig = upper_digits;
     len = 0;
@@ -174,6 +176,7 @@ iaddr(char *str, unsigned char *addr, int size, int precision, int type)
     char tmp[24];
     int  i, n, len;
 
+    (void)precision;
     len = 0;
     for (i = 0; i < 4; i++)
     {
@@ -584,9 +587,9 @@ ee_vsprintf(char *buf, const char *fmt, va_list args)
                              precision,
                              flags);
                 continue;
-
             case 'A':
                 flags |= UPPERCASE;
+                /* fall through */
 
             case 'a':
                 if (qualifier == 'l')
@@ -610,6 +613,7 @@ ee_vsprintf(char *buf, const char *fmt, va_list args)
 
             case 'X':
                 flags |= UPPERCASE;
+                /* fall through */
 
             case 'x':
                 base = 16;
@@ -662,20 +666,7 @@ ee_vsprintf(char *buf, const char *fmt, va_list args)
 void
 uart_send_char(char c)
 {
-#error "You must implement the method uart_send_char to use this file!\n";
-    /*	Output of a char to a UART usually follows the following model:
-            Wait until UART is ready
-            Write char to UART
-            Wait until UART is done
-
-            Or in code:
-            while (*UART_CONTROL_ADDRESS != UART_READY);
-            *UART_DATA_ADDRESS = c;
-            while (*UART_CONTROL_ADDRESS != UART_READY);
-
-            Check the UART sample code on your platform or the board
-       documentation.
-    */
+    SEGGER_RTT_PutChar(0, c);
 }
 
 int

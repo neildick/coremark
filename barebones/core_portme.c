@@ -15,8 +15,10 @@ limitations under the License.
 
 Original Author: Shay Gal-on
 */
-#include "coremark.h"
+#include "../coremark.h"
 #include "core_portme.h"
+#include "ARMCM4_FP.h"
+#include "SEGGER_RTT.h"
 
 #if VALIDATION_RUN
 volatile ee_s32 seed1_volatile = 0x3415;
@@ -44,8 +46,8 @@ volatile ee_s32 seed5_volatile = 0;
 CORETIMETYPE
 barebones_clock()
 {
-#error \
-    "You must implement a method to measure time in barebones_clock()! This function should return current time.\n"
+    unsigned long t = (*((volatile unsigned long *)(0xE000E018)));
+    return t;
 }
 /* Define : TIMER_RES_DIVIDER
         Divider to trade off timer resolution and total time that can be
@@ -55,6 +57,7 @@ barebones_clock()
    does not occur. If there are issues with the return value overflowing,
    increase this value.
         */
+#define CLOCKS_PER_SEC 50000000U // 50 MHz clock
 #define GETMYTIME(_t)              (*_t = barebones_clock())
 #define MYTIMEDIFF(fin, ini)       ((fin) - (ini))
 #define TIMER_RES_DIVIDER          1
@@ -75,6 +78,8 @@ static CORETIMETYPE start_time_val, stop_time_val;
 void
 start_time(void)
 {
+    // Have to start the SYSTICK timer off
+    SysTick_Config(0xFFFFFF);
     GETMYTIME(&start_time_val);
 }
 /* Function : stop_time
@@ -88,7 +93,9 @@ start_time(void)
 void
 stop_time(void)
 {
+
     GETMYTIME(&stop_time_val);
+    SysTick->CTRL = 0;
 }
 /* Function : get_time
         Return an abstract "ticks" number that signifies time on the system.
@@ -129,8 +136,10 @@ ee_u32 default_num_contexts = 1;
 void
 portable_init(core_portable *p, int *argc, char *argv[])
 {
-#error \
-    "Call board initialization routines in portable init (if needed), in particular initialize UART!\n"
+    SEGGER_RTT_Init();
+#if defined(MAIN_HAS_NOARGC) && (MAIN_HAS_NOARGC==1)
+    (void)argc;(void)argv;
+#endif
     if (sizeof(ee_ptr_int) != sizeof(ee_u8 *))
     {
         ee_printf(
