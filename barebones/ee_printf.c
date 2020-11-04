@@ -666,7 +666,11 @@ ee_vsprintf(char *buf, const char *fmt, va_list args)
 void
 uart_send_char(char c)
 {
+#ifndef SILENT
     SEGGER_RTT_PutChar(0, c);
+#else
+    (void)c;
+#endif
 }
 
 int

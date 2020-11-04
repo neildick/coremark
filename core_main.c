@@ -103,7 +103,9 @@ char *mem_name[3] = { "Static", "Heap", "Stack" };
    the benchmark will run between 10 to 100 secs
 
 */
-
+static ee_s16 total_errors;
+static volatile int score;
+static CORE_TICKS   total_time;
 #if MAIN_HAS_NOARGC
 MAIN_RETURN_TYPE
 main(void)
@@ -116,9 +118,9 @@ main(int argc, char *argv[])
 {
 #endif
     ee_u16       i, j = 0, num_algorithms = 0;
-    ee_s16       known_id = -1, total_errors = 0;
+    ee_s16       known_id = -1;
     ee_u16       seedcrc = 0;
-    CORE_TICKS   total_time;
+
     core_results results[MULTITHREAD];
 #if (MEM_METHOD == MEM_STACK)
     ee_u8 stack_memblock[TOTAL_DATA_SIZE * MULTITHREAD];
@@ -406,6 +408,11 @@ for (i = 0; i < MULTITHREAD; i++)
 #if HAS_FLOAT
         if (known_id == 3)
         {
+            if (total_errors == 0)
+                score = 100 * (default_num_contexts * results[0].iterations
+                            / time_in_secs(total_time));
+            else
+                score = 1;
             ee_printf("CoreMark 1.0 : %f / %s %s",
                       default_num_contexts * results[0].iterations
                           / time_in_secs(total_time),

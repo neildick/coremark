@@ -49,9 +49,9 @@ static volatile unsigned long tick;
 CORETIMETYPE
 barebones_clock()
 {
-    unsigned long ticks, subtick;
+    unsigned int ticks, subtick;
     __disable_irq();
-    subtick = (*((volatile unsigned long *)(0xE000E018)));
+    subtick = (*((volatile unsigned int *)(0xE000E018)));
     ticks = tick;
     __enable_irq();
     return (ticks * SysTick_reload) + (SysTick_reload - subtick);
@@ -94,6 +94,8 @@ void
 start_time(void)
 {
     // Have to start the SYSTICK timer off
+    // the first thing SysTick_Config does is trigger the ISR, so make tick -1
+    tick = -1;
     SysTick_Config(SysTick_reload);
     GETMYTIME(&start_time_val);
 }

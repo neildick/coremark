@@ -3,9 +3,7 @@ cc = arm-none-eabi-gcc
 ld = arm-none-eabi-ld
 obj = arm-none-eabi-objcopy
 
-cflags = --std=c99 -Wextra -ffunction-sections -fdata-sections -O3 -funroll-loops -ffast-math  -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wall -D ARMCM4_FP -D ITERATIONS=1000
-
-
+cflags = --std=c99 -Wextra -ffunction-sections -fdata-sections -O3 -funroll-loops -ffast-math -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wall -D ARMCM4_FP -D ITERATIONS=1000 -D PERFORMANCE_RUN -D SILENT
 
 includes = -I ..\CMSIS\CMSIS\Core\Include\ -I ..\CMSIS\Device\ARM\ARMCM4\Include -I ..\CSR_Headers\ -I .\ -I ..\RTT  -I .\barebones
 
